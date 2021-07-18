@@ -57,6 +57,7 @@ const pip3Packages: string[] = [
 	"wheel",
 ];
 
+const cdrootCommandLine: string[] = ["bash", "-c", "cd", "/", "&"];
 const pip3CommandLine: string[] = ["pip3", "install", "--upgrade"];
 
 /**
@@ -73,9 +74,15 @@ export async function runPython3PipInstall(
 	const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
 	const args = pip3CommandLine.concat(packages);
 	if (sudo_enabled) {
-		return utils.exec("sudo", pip3CommandLine.concat(packages));
+		return utils.exec(
+			"sudo",
+			cdrootCommandLine.concat(pip3CommandLine.concat(packages))
+		);
 	} else {
-		return utils.exec(args[0], args.splice(1));
+		return utils.exec(
+			cdrootCommandLine[0],
+			cdrootCommandLine.splice(1).concat(args)
+		);
 	}
 }
 

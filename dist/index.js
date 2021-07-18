@@ -5391,6 +5391,7 @@ const pip3Packages = [
     "setuptools",
     "wheel",
 ];
+const cdrootCommandLine = ["bash", "-c", "cd", "/", "&"];
 const pip3CommandLine = ["pip3", "install", "--upgrade"];
 /**
  * Run Python3 pip install on a list of specified packages.
@@ -5404,10 +5405,10 @@ function runPython3PipInstall(packages, run_with_sudo) {
         const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
         const args = pip3CommandLine.concat(packages);
         if (sudo_enabled) {
-            return utils.exec("sudo", pip3CommandLine.concat(packages));
+            return utils.exec("sudo", cdrootCommandLine.concat(pip3CommandLine.concat(packages)));
         }
         else {
-            return utils.exec(args[0], args.splice(1));
+            return utils.exec(cdrootCommandLine[0], cdrootCommandLine.splice(1).concat(args));
         }
     });
 }
