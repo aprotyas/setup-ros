@@ -5391,7 +5391,7 @@ const pip3Packages = [
     "setuptools",
     "wheel",
 ];
-const pip3CommandLine = ["pip3", "install", "--upgrade"];
+const pip3CommandLine = ["pip3", "install", "--upgrade", "--user"];
 /**
  * Run Python3 pip install on a list of specified packages.
  *
@@ -5576,10 +5576,6 @@ function runLinux() {
         // vcs dependencies (e.g. git), as well as base building packages are not pulled by rosdep, so
         // they are also installed during this stage.
         yield apt.installAptDependencies(installConnext);
-        // Before running `pip`, change directory to where a `setup.cfg` should not exist.
-        // This prevents `pip` from installing to `install_scripts` as specified in the
-        // `setup.cfg`, which for most packages in the ROS ecosystem is `$base/lib/<pkg-name>`.
-        yield utils.exec("bash", ["-c", "cd", "/"]);
         /* Get the latest version of pip before installing dependencies,
         the version from apt can be very out of date (v8.0 on xenial)
         The latest version of pip doesn't support Python3.5 as of v21,
@@ -5591,8 +5587,6 @@ function runLinux() {
         modules such as cryptography requires python-dev to be installed,
         because they rely on Python C headers. */
         yield pip.installPython3Dependencies();
-        // Return to the original directory.
-        yield utils.exec("bash", ["-c", "cd", "-"]);
         // Initializes rosdep, trying to remove the default file first in case this environment has already done a rosdep init before
         yield utils.exec("sudo", [
             "bash",
