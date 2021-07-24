@@ -73,31 +73,34 @@ export async function runPython3PipInstall(
 ): Promise<number> {
 	const isWin = process.platform === "win32";
 	const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
-	const args = pip3CommandLine.concat(packages);
+	let args = pip3CommandLine.concat(packages);
 	if (utils.checkFileExists(path.join(process.cwd(), "setup.cfg"))) {
+		const pip_install_prefix = path.join(process.cwd(), ".pip_install_dir");
+		args = args.concat(["--prefix", pip_install_prefix]);
+		const pip_subdirs = utils.getSubDirs(path.join(pip_install_prefix, "lib"));
+		let path_separator;
 		if (isWin) {
-			//args = args.concat(["--target", "/usr/local/bin"]);
-			utils.exec("cd..");
+			path_separator = ";";
 		} else {
-			//args = args.concat(["--target", ".local"]);
-			//process.env.PATH
-			utils.exec("cd", [".."]);
+			path_separator = ":";
 		}
+		pip_subdirs?.then(function (subdirs) {
+			subdirs?.forEach(async (subdir) => {
+				if (process.env.PATH) {
+					process.env.PATH = process.env.PATH.concat(
+						path_separator,
+						path.join(pip_install_prefix, "lib", subdir)
+					);
+				} else {
+					process.env.PATH = path.join(pip_install_prefix, "lib", subdir);
+				}
+			});
+		});
 	}
 	if (sudo_enabled) {
 		return utils.exec("sudo", args);
 	} else {
 		return utils.exec(args[0], args.splice(1));
-	}
-	if (utils.checkFileExists(path.join(process.cwd(), "setup.cfg"))) {
-		if (isWin) {
-			//args = args.concat(["--target", "/usr/local/bin"]);
-			utils.exec("cd\\");
-		} else {
-			//args = args.concat(["--target", ".local"]);
-			//process.env.PATH
-			utils.exec("cd", ["-"]);
-		}
 	}
 }
 

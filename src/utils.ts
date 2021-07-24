@@ -2,6 +2,7 @@ import * as actions_exec from "@actions/exec";
 import * as core from "@actions/core";
 import * as im from "@actions/exec/lib/interfaces";
 import fs from "fs";
+import path from "path";
 
 /**
  * Execute a command and wrap the output in a log group.
@@ -70,7 +71,7 @@ export function validateDistro(
 /**
  * Check for existence of a given file path.
  *
- * @param   filePath         command to execute (can include additional args). Must be correctly escaped.
+ * @param   filePath         relative path to the file being inspected.
  * @returns Promise<boolean> true if file exists.
  */
 export async function checkFileExists(filePath: string): Promise<boolean> {
@@ -79,4 +80,23 @@ export async function checkFileExists(filePath: string): Promise<boolean> {
 			resolve(!error);
 		});
 	});
+}
+
+/**
+ * Return an array of subdirectories with respect to a provided directory.
+ *
+ * @param   dir              relative path to the directory being inspected.
+ * @returns Promise<Array>   array of subdirectory names.
+ */
+export async function getSubDirs(dir: string): Promise<Array<string>> {
+	const dirents: fs.Dirent[] = await fs.promises.readdir(dir, {
+		withFileTypes: true,
+	});
+	const subdirs = await Promise.all(
+		dirents.map((dirent) => {
+			const res = path.resolve(dir, dirent.name);
+			return res;
+		})
+	);
+	return Array.prototype.concat(...subdirs);
 }

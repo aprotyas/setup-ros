@@ -5407,34 +5407,34 @@ function runPython3PipInstall(packages, run_with_sudo) {
     return __awaiter(this, void 0, void 0, function* () {
         const isWin = process.platform === "win32";
         const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
-        const args = pip3CommandLine.concat(packages);
+        let args = pip3CommandLine.concat(packages);
         if (utils.checkFileExists(path_1.default.join(process.cwd(), "setup.cfg"))) {
+            const pip_install_prefix = path_1.default.join(process.cwd(), ".pip_install_dir");
+            args = args.concat(["--prefix", pip_install_prefix]);
+            const pip_subdirs = utils.getSubDirs(path_1.default.join(pip_install_prefix, "lib"));
+            let path_separator;
             if (isWin) {
-                //args = args.concat(["--target", "/usr/local/bin"]);
-                utils.exec("cd..");
+                path_separator = ";";
             }
             else {
-                //args = args.concat(["--target", ".local"]);
-                //process.env.PATH
-                utils.exec("cd", [".."]);
+                path_separator = ":";
             }
+            pip_subdirs === null || pip_subdirs === void 0 ? void 0 : pip_subdirs.then(function (subdirs) {
+                subdirs === null || subdirs === void 0 ? void 0 : subdirs.forEach((subdir) => __awaiter(this, void 0, void 0, function* () {
+                    if (process.env.PATH) {
+                        process.env.PATH = process.env.PATH.concat(path_separator, path_1.default.join(pip_install_prefix, "lib", subdir));
+                    }
+                    else {
+                        process.env.PATH = path_1.default.join(pip_install_prefix, "lib", subdir);
+                    }
+                }));
+            });
         }
         if (sudo_enabled) {
             return utils.exec("sudo", args);
         }
         else {
             return utils.exec(args[0], args.splice(1));
-        }
-        if (utils.checkFileExists(path_1.default.join(process.cwd(), "setup.cfg"))) {
-            if (isWin) {
-                //args = args.concat(["--target", "/usr/local/bin"]);
-                utils.exec("cd\\");
-            }
-            else {
-                //args = args.concat(["--target", ".local"]);
-                //process.env.PATH
-                utils.exec("cd", ["-"]);
-            }
         }
     });
 }
@@ -5919,10 +5919,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.checkFileExists = exports.validateDistro = exports.getRequiredRosDistributions = exports.exec = void 0;
+exports.getSubDirs = exports.checkFileExists = exports.validateDistro = exports.getRequiredRosDistributions = exports.exec = void 0;
 const actions_exec = __importStar(__nccwpck_require__(514));
 const core = __importStar(__nccwpck_require__(186));
 const fs_1 = __importDefault(__nccwpck_require__(747));
+const path_1 = __importDefault(__nccwpck_require__(622));
 /**
  * Execute a command and wrap the output in a log group.
  *
@@ -5979,7 +5980,7 @@ exports.validateDistro = validateDistro;
 /**
  * Check for existence of a given file path.
  *
- * @param   filePath         command to execute (can include additional args). Must be correctly escaped.
+ * @param   filePath         relative path to the file being inspected.
  * @returns Promise<boolean> true if file exists.
  */
 function checkFileExists(filePath) {
@@ -5992,6 +5993,25 @@ function checkFileExists(filePath) {
     });
 }
 exports.checkFileExists = checkFileExists;
+/**
+ * Return an array of subdirectories with respect to a provided directory.
+ *
+ * @param   dir              relative path to the directory being inspected.
+ * @returns Promise<Array>   array of subdirectory names.
+ */
+function getSubDirs(dir) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const dirents = yield fs_1.default.promises.readdir(dir, {
+            withFileTypes: true,
+        });
+        const subdirs = yield Promise.all(dirents.map((dirent) => {
+            const res = path_1.default.resolve(dir, dirent.name);
+            return res;
+        }));
+        return Array.prototype.concat(...subdirs);
+    });
+}
+exports.getSubDirs = getSubDirs;
 
 
 /***/ }),
