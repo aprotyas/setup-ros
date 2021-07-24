@@ -5444,9 +5444,21 @@ function addPipDirToPath() {
         pip_subdirs === null || pip_subdirs === void 0 ? void 0 : pip_subdirs.then(function (subdirs) {
             subdirs === null || subdirs === void 0 ? void 0 : subdirs.forEach((subdir) => __awaiter(this, void 0, void 0, function* () {
                 if (process.env.PATH) {
+                    console.log("HERE");
+                    console.log("PATH=$PATH".concat(path_separator, path_1.default.join(pipInstallPath, "lib", subdir)));
+                    if (process.platform === "win32") {
+                        console.log("ok");
+                    }
+                    else {
+                        utils.exec("sudo", [
+                            "export",
+                            "PATH=$PATH".concat(path_separator, path_1.default.join(pipInstallPath, "lib", subdir)),
+                        ]);
+                    }
                     process.env.PATH = process.env.PATH.concat(path_separator, path_1.default.join(pipInstallPath, "lib", subdir));
                 }
                 else {
+                    console.log("THERE");
                     process.env.PATH = path_1.default.join(pipInstallPath, "lib", subdir);
                 }
             }));

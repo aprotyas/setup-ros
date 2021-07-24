@@ -106,11 +106,30 @@ export async function addPipDirToPath() {
 	pip_subdirs?.then(function (subdirs) {
 		subdirs?.forEach(async (subdir) => {
 			if (process.env.PATH) {
+				console.log("HERE");
+				console.log(
+					"PATH=$PATH".concat(
+						path_separator,
+						path.join(pipInstallPath, "lib", subdir)
+					)
+				);
+				if (process.platform === "win32") {
+					console.log("ok");
+				} else {
+					utils.exec("sudo", [
+						"export",
+						"PATH=$PATH".concat(
+							path_separator,
+							path.join(pipInstallPath, "lib", subdir)
+						),
+					]);
+				}
 				process.env.PATH = process.env.PATH.concat(
 					path_separator,
 					path.join(pipInstallPath, "lib", subdir)
 				);
 			} else {
+				console.log("THERE");
 				process.env.PATH = path.join(pipInstallPath, "lib", subdir);
 			}
 		});
