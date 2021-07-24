@@ -5332,9 +5332,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.installPython3Dependencies = exports.runPython3PipInstall = void 0;
 const utils = __importStar(__nccwpck_require__(314));
+const path_1 = __importDefault(__nccwpck_require__(622));
 const pip3Packages = [
     "argcomplete",
     "colcon-bash==0.4.2",
@@ -5401,16 +5405,36 @@ const pip3CommandLine = ["pip3", "install", "--upgrade"];
  */
 function runPython3PipInstall(packages, run_with_sudo) {
     return __awaiter(this, void 0, void 0, function* () {
+        const isWin = process.platform === "win32";
         const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
-        let args = pip3CommandLine.concat(packages);
-        if (utils.checkFileExists(process.cwd().concat("/setup.cfg"))) {
-            args = args.concat(["--target", "/usr/local/bin"]);
+        const args = pip3CommandLine.concat(packages);
+        if (utils.checkFileExists(path_1.default.join(process.cwd(), "setup.cfg"))) {
+            if (isWin) {
+                //args = args.concat(["--target", "/usr/local/bin"]);
+                utils.exec("cd..");
+            }
+            else {
+                //args = args.concat(["--target", ".local"]);
+                //process.env.PATH
+                utils.exec("cd", [".."]);
+            }
         }
         if (sudo_enabled) {
             return utils.exec("sudo", args);
         }
         else {
             return utils.exec(args[0], args.splice(1));
+        }
+        if (utils.checkFileExists(path_1.default.join(process.cwd(), "setup.cfg"))) {
+            if (isWin) {
+                //args = args.concat(["--target", "/usr/local/bin"]);
+                utils.exec("cd\\");
+            }
+            else {
+                //args = args.concat(["--target", ".local"]);
+                //process.env.PATH
+                utils.exec("cd", ["-"]);
+            }
         }
     });
 }

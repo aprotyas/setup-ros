@@ -1,4 +1,5 @@
 import * as utils from "../utils";
+import path from "path";
 
 const pip3Packages: string[] = [
 	"argcomplete",
@@ -70,15 +71,33 @@ export async function runPython3PipInstall(
 	packages: string[],
 	run_with_sudo?: boolean
 ): Promise<number> {
+	const isWin = process.platform === "win32";
 	const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
-	let args = pip3CommandLine.concat(packages);
-	if (utils.checkFileExists(process.cwd().concat("/setup.cfg"))) {
-		args = args.concat(["--target", "/usr/local/bin"]);
+	const args = pip3CommandLine.concat(packages);
+	if (utils.checkFileExists(path.join(process.cwd(), "setup.cfg"))) {
+		if (isWin) {
+			//args = args.concat(["--target", "/usr/local/bin"]);
+			utils.exec("cd..");
+		} else {
+			//args = args.concat(["--target", ".local"]);
+			//process.env.PATH
+			utils.exec("cd", [".."]);
+		}
 	}
 	if (sudo_enabled) {
 		return utils.exec("sudo", args);
 	} else {
 		return utils.exec(args[0], args.splice(1));
+	}
+	if (utils.checkFileExists(path.join(process.cwd(), "setup.cfg"))) {
+		if (isWin) {
+			//args = args.concat(["--target", "/usr/local/bin"]);
+			utils.exec("cd\\");
+		} else {
+			//args = args.concat(["--target", ".local"]);
+			//process.env.PATH
+			utils.exec("cd", ["-"]);
+		}
 	}
 }
 
