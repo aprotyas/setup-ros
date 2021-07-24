@@ -135,6 +135,10 @@ export async function runLinux() {
 	because they rely on Python C headers. */
 	await pip.installPython3Dependencies();
 
+	if (utils.checkFileExists(path.join(process.cwd(), "setup.cfg"))) {
+		pip.addPipDirToPath();
+	}
+
 	// Initializes rosdep, trying to remove the default file first in case this environment has already done a rosdep init before
 	await utils.exec("sudo", [
 		"bash",

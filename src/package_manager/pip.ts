@@ -58,6 +58,8 @@ const pip3Packages: string[] = [
 	"wheel",
 ];
 
+const pipInstallPrefix: string = ".pip_install_dir";
+const pipInstallPath = path.join(process.cwd(), pipInstallPrefix);
 const pip3CommandLine: string[] = ["pip3", "install", "--upgrade"];
 
 /**
@@ -71,32 +73,9 @@ export async function runPython3PipInstall(
 	packages: string[],
 	run_with_sudo?: boolean
 ): Promise<number> {
-	const isWin = process.platform === "win32";
 	const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
 	let args = pip3CommandLine.concat(packages);
-	if (utils.checkFileExists(path.join(process.cwd(), "setup.cfg"))) {
-		const pip_install_prefix = path.join(process.cwd(), ".pip_install_dir");
-		args = args.concat(["--prefix", pip_install_prefix]);
-		const pip_subdirs = utils.getSubDirs(path.join(pip_install_prefix, "lib"));
-		let path_separator;
-		if (isWin) {
-			path_separator = ";";
-		} else {
-			path_separator = ":";
-		}
-		pip_subdirs?.then(function (subdirs) {
-			subdirs?.forEach(async (subdir) => {
-				if (process.env.PATH) {
-					process.env.PATH = process.env.PATH.concat(
-						path_separator,
-						path.join(pip_install_prefix, "lib", subdir)
-					);
-				} else {
-					process.env.PATH = path.join(pip_install_prefix, "lib", subdir);
-				}
-			});
-		});
-	}
+	args = args.concat(["--prefix", pipInstallPath]);
 	if (sudo_enabled) {
 		return utils.exec("sudo", args);
 	} else {
@@ -114,4 +93,26 @@ export async function installPython3Dependencies(
 	run_with_sudo?: boolean
 ): Promise<number> {
 	return runPython3PipInstall(pip3Packages, run_with_sudo);
+}
+
+export async function addPipDirToPath() {
+	const pip_subdirs = utils.getSubDirs(path.join(pipInstallPath, "lib"));
+	let path_separator;
+	if (process.platform === "win32") {
+		path_separator = ";";
+	} else {
+		path_separator = ":";
+	}
+	pip_subdirs?.then(function (subdirs) {
+		subdirs?.forEach(async (subdir) => {
+			if (process.env.PATH) {
+				process.env.PATH = process.env.PATH.concat(
+					path_separator,
+					path.join(pipInstallPath, "lib", subdir)
+				);
+			} else {
+				process.env.PATH = path.join(pipInstallPath, "lib", subdir);
+			}
+		});
+	});
 }

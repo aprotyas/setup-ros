@@ -5336,7 +5336,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.installPython3Dependencies = exports.runPython3PipInstall = void 0;
+exports.addPipDirToPath = exports.installPython3Dependencies = exports.runPython3PipInstall = void 0;
 const utils = __importStar(__nccwpck_require__(314));
 const path_1 = __importDefault(__nccwpck_require__(622));
 const pip3Packages = [
@@ -5395,6 +5395,8 @@ const pip3Packages = [
     "setuptools",
     "wheel",
 ];
+const pipInstallPrefix = ".pip_install_dir";
+const pipInstallPath = path_1.default.join(process.cwd(), pipInstallPrefix);
 const pip3CommandLine = ["pip3", "install", "--upgrade"];
 /**
  * Run Python3 pip install on a list of specified packages.
@@ -5405,31 +5407,9 @@ const pip3CommandLine = ["pip3", "install", "--upgrade"];
  */
 function runPython3PipInstall(packages, run_with_sudo) {
     return __awaiter(this, void 0, void 0, function* () {
-        const isWin = process.platform === "win32";
         const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
         let args = pip3CommandLine.concat(packages);
-        if (utils.checkFileExists(path_1.default.join(process.cwd(), "setup.cfg"))) {
-            const pip_install_prefix = path_1.default.join(process.cwd(), ".pip_install_dir");
-            args = args.concat(["--prefix", pip_install_prefix]);
-            const pip_subdirs = utils.getSubDirs(path_1.default.join(pip_install_prefix, "lib"));
-            let path_separator;
-            if (isWin) {
-                path_separator = ";";
-            }
-            else {
-                path_separator = ":";
-            }
-            pip_subdirs === null || pip_subdirs === void 0 ? void 0 : pip_subdirs.then(function (subdirs) {
-                subdirs === null || subdirs === void 0 ? void 0 : subdirs.forEach((subdir) => __awaiter(this, void 0, void 0, function* () {
-                    if (process.env.PATH) {
-                        process.env.PATH = process.env.PATH.concat(path_separator, path_1.default.join(pip_install_prefix, "lib", subdir));
-                    }
-                    else {
-                        process.env.PATH = path_1.default.join(pip_install_prefix, "lib", subdir);
-                    }
-                }));
-            });
-        }
+        args = args.concat(["--prefix", pipInstallPath]);
         if (sudo_enabled) {
             return utils.exec("sudo", args);
         }
@@ -5451,6 +5431,29 @@ function installPython3Dependencies(run_with_sudo) {
     });
 }
 exports.installPython3Dependencies = installPython3Dependencies;
+function addPipDirToPath() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pip_subdirs = utils.getSubDirs(path_1.default.join(pipInstallPath, "lib"));
+        let path_separator;
+        if (process.platform === "win32") {
+            path_separator = ";";
+        }
+        else {
+            path_separator = ":";
+        }
+        pip_subdirs === null || pip_subdirs === void 0 ? void 0 : pip_subdirs.then(function (subdirs) {
+            subdirs === null || subdirs === void 0 ? void 0 : subdirs.forEach((subdir) => __awaiter(this, void 0, void 0, function* () {
+                if (process.env.PATH) {
+                    process.env.PATH = process.env.PATH.concat(path_separator, path_1.default.join(pipInstallPath, "lib", subdir));
+                }
+                else {
+                    process.env.PATH = path_1.default.join(pipInstallPath, "lib", subdir);
+                }
+            }));
+        });
+    });
+}
+exports.addPipDirToPath = addPipDirToPath;
 
 
 /***/ }),
@@ -5614,6 +5617,9 @@ function runLinux() {
         modules such as cryptography requires python-dev to be installed,
         because they rely on Python C headers. */
         yield pip.installPython3Dependencies();
+        if (utils.checkFileExists(path.join(process.cwd(), "setup.cfg"))) {
+            pip.addPipDirToPath();
+        }
         // Initializes rosdep, trying to remove the default file first in case this environment has already done a rosdep init before
         yield utils.exec("sudo", [
             "bash",
