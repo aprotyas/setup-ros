@@ -5391,7 +5391,7 @@ const pip3Packages = [
     "setuptools",
     "wheel",
 ];
-const pip3CommandLine = ["pip3", "install", "--upgrade", "--user"];
+const pip3CommandLine = ["pip3", "install", "--upgrade"];
 /**
  * Run Python3 pip install on a list of specified packages.
  *
@@ -5402,9 +5402,12 @@ const pip3CommandLine = ["pip3", "install", "--upgrade", "--user"];
 function runPython3PipInstall(packages, run_with_sudo) {
     return __awaiter(this, void 0, void 0, function* () {
         const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
-        const args = pip3CommandLine.concat(packages);
+        let args = pip3CommandLine.concat(packages);
+        if (utils.checkFileExists(process.cwd().concat("/setup.cfg"))) {
+            args = args.concat(["--target", "/usr/local/bin"]);
+        }
         if (sudo_enabled) {
-            return utils.exec("sudo", pip3CommandLine.concat(packages));
+            return utils.exec("sudo", args);
         }
         else {
             return utils.exec(args[0], args.splice(1));
@@ -5888,10 +5891,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.validateDistro = exports.getRequiredRosDistributions = exports.exec = void 0;
+exports.checkFileExists = exports.validateDistro = exports.getRequiredRosDistributions = exports.exec = void 0;
 const actions_exec = __importStar(__nccwpck_require__(514));
 const core = __importStar(__nccwpck_require__(186));
+const fs_1 = __importDefault(__nccwpck_require__(747));
 /**
  * Execute a command and wrap the output in a log group.
  *
@@ -5945,6 +5952,22 @@ function validateDistro(requiredRosDistributionsList) {
     return true;
 }
 exports.validateDistro = validateDistro;
+/**
+ * Check for existence of a given file path.
+ *
+ * @param   filePath         command to execute (can include additional args). Must be correctly escaped.
+ * @returns Promise<boolean> true if file exists.
+ */
+function checkFileExists(filePath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve) => {
+            fs_1.default.access(filePath, fs_1.default.constants.F_OK, (error) => {
+                resolve(!error);
+            });
+        });
+    });
+}
+exports.checkFileExists = checkFileExists;
 
 
 /***/ }),

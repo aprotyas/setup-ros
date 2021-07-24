@@ -1,6 +1,7 @@
 import * as actions_exec from "@actions/exec";
 import * as core from "@actions/core";
 import * as im from "@actions/exec/lib/interfaces";
+import fs from "fs";
 
 /**
  * Execute a command and wrap the output in a log group.
@@ -64,4 +65,18 @@ export function validateDistro(
 	}
 
 	return true;
+}
+
+/**
+ * Check for existence of a given file path.
+ *
+ * @param   filePath         command to execute (can include additional args). Must be correctly escaped.
+ * @returns Promise<boolean> true if file exists.
+ */
+export async function checkFileExists(filePath: string): Promise<boolean> {
+	return new Promise((resolve) => {
+		fs.access(filePath, fs.constants.F_OK, (error) => {
+			resolve(!error);
+		});
+	});
 }

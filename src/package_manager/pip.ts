@@ -57,7 +57,7 @@ const pip3Packages: string[] = [
 	"wheel",
 ];
 
-const pip3CommandLine: string[] = ["pip3", "install", "--upgrade", "--user"];
+const pip3CommandLine: string[] = ["pip3", "install", "--upgrade"];
 
 /**
  * Run Python3 pip install on a list of specified packages.
@@ -71,9 +71,12 @@ export async function runPython3PipInstall(
 	run_with_sudo?: boolean
 ): Promise<number> {
 	const sudo_enabled = run_with_sudo === undefined ? true : run_with_sudo;
-	const args = pip3CommandLine.concat(packages);
+	let args = pip3CommandLine.concat(packages);
+	if (utils.checkFileExists(process.cwd().concat("/setup.cfg"))) {
+		args = args.concat(["--target", "/usr/local/bin"]);
+	}
 	if (sudo_enabled) {
-		return utils.exec("sudo", pip3CommandLine.concat(packages));
+		return utils.exec("sudo", args);
 	} else {
 		return utils.exec(args[0], args.splice(1));
 	}
